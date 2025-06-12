@@ -4,6 +4,9 @@ const rateLimit = require("express-rate-limit");
 const morgan = require("morgan");
 const helmet = require("helmet");
 
+const AppError = require("./utils/appError");
+const globalErrorHandler = require("./middlewares/errorHandler");
+
 const app = express();
 
 app.use(express.json({ limit: "10kb" }));
@@ -26,3 +29,11 @@ app.use("/api", limiter);
 app.get("health", (req, res) => {
   res.json({ message: "OK" });
 });
+
+app.all("*", (req, res, next) => {
+  next(new AppError(`Can't find ${req.originalUrl} on this server.`, 404));
+});
+
+app.use(globalErrorHandler);
+
+module.exports = app;
