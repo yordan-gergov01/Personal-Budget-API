@@ -6,6 +6,7 @@ const helmet = require("helmet");
 
 const AppError = require("./utils/appError");
 const globalErrorHandler = require("./middlewares/errorHandler");
+const envelopesRouter = require("./routes/envelopesRoutes");
 
 const app = express();
 
@@ -25,6 +26,7 @@ const limiter = rateLimit({
 });
 
 app.use("/api", limiter);
+app.use("/api/envelopes", envelopesRouter);
 
 app.get("health", (req, res) => {
   res.json({ message: "OK" });
