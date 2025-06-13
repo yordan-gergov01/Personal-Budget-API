@@ -11,7 +11,7 @@ dotenv.config({ path: "./.env" });
 
 const app = require("./app");
 
-const PORT = procecc.env.APP_PORT || 3000;
+const PORT = process.env.APP_PORT || 3000;
 const server = app.listen(PORT, () => {
   console.log(`Server started at port ${PORT}...`);
 });

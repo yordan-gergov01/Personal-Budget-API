@@ -20,6 +20,8 @@ class EnvelopeManager {
     };
 
     this.envelopes.push(newEnvelope);
+
+    return newEnvelope;
   }
 
   updateEnvelope(id, title, budget) {
