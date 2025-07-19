@@ -1,66 +1,92 @@
+const pool = require("../config/db");
+
 class EnvelopeManager {
-  constructor() {
-    this.envelopes = [];
-    this.nextId = 1;
+  async getAllEnvelopes() {
+    const result = await pool.query("SELECT * FROM envelopes ORDER BY id ASC");
+
+    return result.rows;
   }
 
-  getAllEnvelopes() {
-    return this.envelopes;
+  async getEnvelopeById(id) {
+    const result = await pool.query("SELECT * FROM envelopes WHERE id = $1", [
+      id,
+    ]);
+
+    return result.rows[0] || null;
   }
 
-  getEnvelopeById(id) {
-    return this.envelopes.find((envelope) => envelope.id === id);
-  }
-
-  createNewEnvelope(title, budget) {
-    const newEnvelope = {
-      id: this.nextId++,
-      title,
-      budget: Number(budget),
-    };
-
-    this.envelopes.push(newEnvelope);
-
-    return newEnvelope;
-  }
-
-  updateEnvelope(id, title, budget) {
-    const updatedEnvelope = this.getEnvelopeById(id);
-
-    if (!updatedEnvelope) return null;
-
-    updatedEnvelope.title = title;
-    updatedEnvelope.budget = Number(budget);
-
-    return updatedEnvelope;
-  }
-
-  deleteEnvelope(id) {
-    const deletedEnvelopeIndex = this.envelopes.findIndex(
-      (envelope) => envelope.id === id
+  async createNewEnvelope(title, budget) {
+    const result = await pool.query(
+      "INSERT INTO envelopes (title, budget) VALUES ($1, $2) RETURNING *",
+      [title, budget]
     );
 
-    if (deletedEnvelopeIndex === -1) return false;
-
-    this.envelopes.splice(deletedEnvelopeIndex, 1);
-
-    return true;
+    return result.rows[0];
   }
 
-  transferBudget(fromId, toId, amount) {
-    const transferFrom = this.getEnvelopeById(fromId);
-    const transferTo = this.getEnvelopeById(toId);
+  async updateEnvelope(id, title, budget) {
+    const result = await pool.query(
+      "UPDATE envelopes SET title = $1, budget = $2 WHERE id = $3 RETURNING *",
+      [id, title, budget]
+    );
 
-    if (!transferFrom || !transferTo) return null;
+    return result.rows[0] || null;
+  }
 
-    if (typeof amount !== "number" || amount <= 0) return null;
+  async deleteEnvelope(id) {
+    const result = await pool.query(
+      "DELETE FROM envelopes WHERE id = $1 RETURNING *",
+      [id]
+    );
 
-    if (transferFrom.budget < amount) return null;
+    return result.rowCount > 0;
+  }
 
-    transferFrom.budget -= amount;
-    transferTo.budget += amount;
+  async transferBudget(fromId, toId, amount) {
+    const client = await pool.connect();
 
-    return { transferFrom, transferTo };
+    try {
+      await client.query("BEGIN");
+
+      const fromRes = await client.query(
+        "SELECT budget FROM envelopes WHERE id = $1 FOR UPDATE",
+        [fromId]
+      );
+
+      const toRes = await client.query(
+        "SELECT budget FROM envelopes WHERE id = $1 FOR UPDATE",
+        [toId]
+      );
+
+      if (fromRes.rows.length === 0 || toRes.rows.length === 0) {
+        throw new Error("Invalid envelope IDs.");
+      }
+
+      const fromBudget = fromRes.rows[0].budget;
+
+      if (fromBudget < amount) {
+        throw new Error("Insufficient funds.");
+      }
+
+      await client.query(
+        "UPDATE envelopes SET budget = budget - $1 WHERE id = $2",
+        [amount, fromId]
+      );
+
+      await client.query(
+        "UPDATE envelopes SET budget = budget + $1 WHERE id = $2",
+        [amount, toId]
+      );
+
+      await client.query("COMMIT");
+
+      return { transferFrom: fromId, transferTo: toId, amount };
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw new Error(error);
+    } finally {
+      client.release();
+    }
   }
 }
 
