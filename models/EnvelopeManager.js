@@ -42,20 +42,20 @@ class EnvelopeManager {
     return result.rowCount > 0;
   }
 
-  async transferBudget(fromId, toId, amount) {
+  async transferBudget(fromId, toId, amount, userId) {
     const client = await pool.connect();
 
     try {
       await client.query("BEGIN");
 
       const fromRes = await client.query(
-        "SELECT budget FROM envelopes WHERE id = $1 FOR UPDATE",
-        [fromId]
+        "SELECT budget FROM envelopes WHERE id = $1 AND user_id = $2 FOR UPDATE",
+        [fromId, userId]
       );
 
       const toRes = await client.query(
-        "SELECT budget FROM envelopes WHERE id = $1 FOR UPDATE",
-        [toId]
+        "SELECT budget FROM envelopes WHERE id = $1 AND user_id = $2 FOR UPDATE",
+        [toId, userId]
       );
 
       if (fromRes.rows.length === 0 || toRes.rows.length === 0) {

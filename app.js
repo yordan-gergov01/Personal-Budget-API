@@ -9,6 +9,7 @@ const AppError = require("./utils/appError");
 const globalErrorHandler = require("./middlewares/errorHandler");
 const envelopesRouter = require("./routes/envelopesRoutes");
 const usersRouter = require("./routes/usersRoutes");
+const transfersRouter = require("./routes/transfersRoutes");
 
 const app = express();
 
@@ -32,6 +33,7 @@ const limiter = rateLimit({
 app.use("/api", limiter);
 app.use("/api/envelopes", envelopesRouter);
 app.use("/api/users", usersRouter);
+app.use("/api/transfers", transfersRouter);
 
 app.get("health", (req, res) => {
   res.json({ message: "OK" });

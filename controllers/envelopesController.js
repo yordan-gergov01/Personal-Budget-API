@@ -116,6 +116,7 @@ const transferBudget = async (req, res, next) => {
     const fromId = Number(req.params.fromId);
     const toId = Number(req.params.toId);
     const { amount } = req.body;
+    const userId = req.user.id;
 
     if (!amount || typeof amount !== "number" || amount <= 0) {
       return next(
@@ -123,7 +124,7 @@ const transferBudget = async (req, res, next) => {
       );
     }
 
-    const transfer = await manager.transferBudget(fromId, toId, amount);
+    const transfer = await manager.transferBudget(fromId, toId, amount, userId);
 
     if (!transfer) {
       return next(
