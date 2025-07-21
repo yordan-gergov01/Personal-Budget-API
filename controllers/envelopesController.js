@@ -41,6 +41,7 @@ const getEnvelopeById = async (req, res, next) => {
 const createNewEnvelope = async (req, res, next) => {
   try {
     const { title, budget } = req.body;
+    const userId = req.user.id;
 
     if (!title || !budget || typeof budget !== "number") {
       return next(
@@ -51,7 +52,7 @@ const createNewEnvelope = async (req, res, next) => {
       );
     }
 
-    const newEnvelope = manager.createNewEnvelope(title, budget);
+    const newEnvelope = await manager.createNewEnvelope(title, budget, userId);
 
     res.status(201).json({
       status: "success",

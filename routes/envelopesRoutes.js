@@ -9,7 +9,11 @@ const {
   transferBudget,
 } = require("../controllers/envelopesController");
 
+const protect = require("../middlewares/authMiddleware");
+
 const envelopesRouter = express.Router();
+
+envelopesRouter.use(protect);
 
 envelopesRouter.get("/", getAllEnvelopes);
 envelopesRouter.get("/:id", getEnvelopeById);

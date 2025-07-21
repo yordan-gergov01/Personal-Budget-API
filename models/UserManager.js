@@ -1,9 +1,11 @@
 const pool = require("../config/db");
 const bcrypt = require("bcrypt");
 
+const saltRounds = Number(process.env.SALT_ROUNDS);
+
 class UserManager {
   async registerUser(email, username, password) {
-    const hashedPassword = await bcrypt.hash(password, process.env.JWT_SECRET);
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
     const result = await pool.query(
       "INSERT INTO users (email, username, password) VALUES ($1, $2, $3) RETURNING id, username, email",
       [email, username, hashedPassword]

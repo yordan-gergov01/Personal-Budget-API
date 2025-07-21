@@ -15,10 +15,10 @@ class EnvelopeManager {
     return result.rows[0] || null;
   }
 
-  async createNewEnvelope(title, budget) {
+  async createNewEnvelope(title, budget, userId) {
     const result = await pool.query(
-      "INSERT INTO envelopes (title, budget) VALUES ($1, $2) RETURNING *",
-      [title, budget]
+      "INSERT INTO envelopes (title, budget, user_id) VALUES ($1, $2, $3) RETURNING *",
+      [title, budget, userId]
     );
 
     return result.rows[0];
