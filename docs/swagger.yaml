@@ -1,0 +1,461 @@
+openapi: 3.0.3
+info:
+  title: Personal Budget API
+  description: API for managing personal budget envelopes, transfers, and user authentication.
+  version: 1.0.0
+servers:
+  - url: http://localhost:3030/api
+    description: Local development server
+
+tags:
+  - name: Users
+    description: User authentication and profile
+  - name: Envelopes
+    description: Budget envelopes management
+  - name: Transfers
+    description: Budget transfers between envelopes
+
+paths:
+  /users/register:
+    post:
+      tags: [Users]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, username, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                username:
+                  type: string
+                password:
+                  type: string
+      responses:
+        "201":
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Invalid input or user exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /users/login:
+    post:
+      tags: [Users]
+      summary: Login a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        "200":
+          description: User logged in successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /users/logout:
+    post:
+      tags: [Users]
+      summary: Logout user
+      responses:
+        "200":
+          description: User logged out
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+
+  /users/profile:
+    get:
+      tags: [Users]
+      summary: Get user profile
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      user:
+                        $ref: "#/components/schemas/User"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /envelopes:
+    get:
+      tags: [Envelopes]
+      summary: Get all envelopes
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of envelopes
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      envelopes:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Envelope"
+    post:
+      tags: [Envelopes]
+      summary: Create a new envelope
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title, budget]
+              properties:
+                title:
+                  type: string
+                budget:
+                  type: number
+      responses:
+        "201":
+          description: Envelope created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      newEnvelope:
+                        $ref: "#/components/schemas/Envelope"
+        "400":
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /envelopes/{id}:
+    get:
+      tags: [Envelopes]
+      summary: Get envelope by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Envelope details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      envelope:
+                        $ref: "#/components/schemas/Envelope"
+        "404":
+          description: Envelope not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    put:
+      tags: [Envelopes]
+      summary: Update envelope
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title, budget]
+              properties:
+                title:
+                  type: string
+                budget:
+                  type: number
+      responses:
+        "200":
+          description: Envelope updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      updatedEnvelope:
+                        $ref: "#/components/schemas/Envelope"
+        "404":
+          description: Envelope not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      tags: [Envelopes]
+      summary: Delete envelope
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Envelope deleted
+        "404":
+          description: Envelope not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /envelopes/transfer/{fromId}/{toId}:
+    put:
+      tags: [Envelopes]
+      summary: Transfer budget between envelopes
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: fromId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: toId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount]
+              properties:
+                amount:
+                  type: number
+      responses:
+        "200":
+          description: Transfer successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      from:
+                        type: integer
+                      to:
+                        type: integer
+        "400":
+          description: Transfer failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /transfers:
+    get:
+      tags: [Transfers]
+      summary: Get all transfers for user
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of transfers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Transfer"
+    post:
+      tags: [Transfers]
+      summary: Create a transfer
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [fromId, toId, amount]
+              properties:
+                fromId:
+                  type: integer
+                toId:
+                  type: integer
+                amount:
+                  type: number
+      responses:
+        "201":
+          description: Transfer created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      transfer:
+                        $ref: "#/components/schemas/Transfer"
+                      updated:
+                        type: object
+        "400":
+          description: Transfer failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        username:
+          type: string
+        email:
+          type: string
+    Envelope:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        budget:
+          type: number
+        user_id:
+          type: integer
+    Transfer:
+      type: object
+      properties:
+        id:
+          type: integer
+        from_id:
+          type: integer
+        to_id:
+          type: integer
+        amount:
+          type: number
+        user_id:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+    AuthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        token:
+          type: string
+        user:
+          $ref: "#/components/schemas/User"
+    Error:
+      type: object
+      properties:
+        status:
+          type: string
+        message:
+          type: string

@@ -5,6 +5,10 @@ const morgan = require("morgan");
 const helmet = require("helmet");
 const cookieParser = require("cookie-parser");
 
+const swaggerUi = require("swagger-ui-express");
+const YAML = require("yamljs");
+const swaggerDocument = YAML.load("./docs/swagger.yaml");
+
 const AppError = require("./utils/appError");
 const globalErrorHandler = require("./middlewares/errorHandler");
 const envelopesRouter = require("./routes/envelopesRoutes");
@@ -34,6 +38,8 @@ app.use("/api", limiter);
 app.use("/api/envelopes", envelopesRouter);
 app.use("/api/users", usersRouter);
 app.use("/api/transfers", transfersRouter);
+
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.get("health", (req, res) => {
   res.json({ message: "OK" });
