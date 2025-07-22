@@ -36,15 +36,25 @@ npm install
 ### 3. Create .env File
 
 APP_PORT
+
 DB_NAME
+
 DB_USER
+
 DB_PASSWORD
+
 DB_HOST
+
 DB_PORT
+
 SALT_ROUNDS
+
 JWT_SECRET
+
 JWT_EXPIRES_IN
+
 JWT_COOKIE_EXPIRES_IN
+
 
 
 ### 4. Database Schema
